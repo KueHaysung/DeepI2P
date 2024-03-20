@@ -1,3 +1,5 @@
+import sys
+sys.path.append("/home/qhc/test/DeepI2P")
 import open3d
 import torch.utils.data as data
 import random
@@ -128,7 +130,8 @@ class KittiLoader(data.Dataset):
         contrast = (0.8, 1.2)
         saturation = (0.8, 1.2)
         hue = (-0.1, 0.1)
-        color_aug = transforms.ColorJitter.get_params(brightness, contrast, saturation, hue)
+        color_aug = transforms.ColorJitter(brightness=brightness, contrast=contrast, saturation=saturation, hue=hue)
+
         img_color_aug_np = np.array(color_aug(Image.fromarray(img_np)))
 
         return img_color_aug_np
@@ -149,7 +152,7 @@ class KittiLoader(data.Dataset):
                   random.uniform(-P_Rz_amplitude, P_Rz_amplitude)]
 
         rotation_mat = augmentation.angles2rotation_matrix(angles)
-        P_random = np.identity(4, dtype=np.float)
+        P_random = np.identity(4, dtype=np.float64)
         P_random[0:3, 0:3] = rotation_mat
         P_random[0:3, 3] = t
 
@@ -385,31 +388,31 @@ class KittiLoader(data.Dataset):
 
 
         # debug for kitti odometry correctness
-        # print(Pij)
-        #
-        # data_i = np.load(os.path.join(pc_folder, '%06d.npy' % seq_i)).astype(np.float32)
-        # pc_np_i = data_i[0:3, :]
-        # intensity_np_i = data_i[3:4, :]
-        # pc_np_i, intensity_np_i = self.downsample_np(pc_np_i, intensity_np_i)
-        #
-        # pc_homo_np = np.concatenate((pc_np, np.ones((1, pc_np.shape[1]), dtype=pc_np.dtype)), axis=0)  # 4xN
-        # PijPc = np.dot(Pij, Pc)
-        # Pc_pc_np = np.dot(PijPc, pc_homo_np)[0:3, :]
-        #
-        # pc_homo_np_i = np.concatenate((pc_np_i, np.ones((1, pc_np_i.shape[1]), dtype=pc_np_i.dtype)), axis=0)  # 4xN
-        # Pc_pc_np_i = np.dot(Pc, pc_homo_np_i)[0:3, :]
-        #
-        # ax = vis_tools.plot_pc(Pc_pc_np, color=(1, 0, 0))
-        # ax = vis_tools.plot_pc(Pc_pc_np_i, color=(0, 0, 1), ax=ax)
-        # plt.show()
+        print(Pji)
+        
+        data_i = np.load(os.path.join(pc_folder, '%06d.npy' % seq_i)).astype(np.float32)
+        pc_np_i = data_i[0:3, :]
+        intensity_np_i = data_i[3:4, :]
+        pc_np_i, intensity_np_i = self.downsample_np(pc_np_i, intensity_np_i)
+        
+        pc_homo_np = np.concatenate((pc_np, np.ones((1, pc_np.shape[1]), dtype=pc_np.dtype)), axis=0)  # 4xN
+        PijPc = np.dot(Pji, Pc)
+        Pc_pc_np = np.dot(PijPc, pc_homo_np)[0:3, :]
+        
+        pc_homo_np_i = np.concatenate((pc_np_i, np.ones((1, pc_np_i.shape[1]), dtype=pc_np_i.dtype)), axis=0)  # 4xN
+        Pc_pc_np_i = np.dot(Pc, pc_homo_np_i)[0:3, :]
+        
+        ax = vis_tools.plot_pc(Pc_pc_np, color=(1, 0, 0))
+        ax = vis_tools.plot_pc(Pc_pc_np_i, color=(0, 0, 1), ax=ax)
+        plt.show()
 
         # visualization of random transformation & augmentation
-        # pc_np_homo = np.concatenate((pc_np, np.ones((1, pc_np.shape[1]))), axis=0)  # 4xN
-        # pc_np_recovered_homo = np.dot(P, pc_np_homo)
-        # pc_np_recovered_vis = projection_pc_img(pc_np_recovered_homo[0:3, :], img, K, size=1)
-        # plt.figure()
-        # plt.imshow(pc_np_recovered_vis)
-        # plt.show()
+        pc_np_homo = np.concatenate((pc_np, np.ones((1, pc_np.shape[1]))), axis=0)  # 4xN
+        pc_np_recovered_homo = np.dot(P, pc_np_homo)
+        pc_np_recovered_vis = projection_pc_img(pc_np_recovered_homo[0:3, :], img, K, size=1)
+        plt.figure()
+        plt.imshow(pc_np_recovered_vis)
+        plt.show()
 
         # ------------ Farthest Point Sampling ------------------
         # node_a_np = fps_approximate(pc_np, voxel_size=4.0, node_num=self.opt.node_a_num)
@@ -447,7 +450,7 @@ class KittiLoader(data.Dataset):
 
 
 if __name__ == '__main__':
-    root_path = '/ssd/jiaxin/datasets/kitti'
+    root_path = '/media/qhc/Ubuntu 22.0/kitti'
     opt = options.Options()
     kittiloader = KittiLoader(root_path, 'train', opt)
 

@@ -1,3 +1,5 @@
+import sys
+sys.path.append("/home/qhc/test/DeepI2P")
 import numpy as np
 import os
 import math
@@ -14,7 +16,7 @@ import matplotlib.cm as cm
 from util import vis_tools
 from data import kitti_helper
 
-
+#此函数用于将点云数据进行降采样，同时保留强度和法向量信息
 def downsample_with_intensity_sn(pointcloud, intensity, sn, voxel_grid_downsample_size):
     pcd = open3d.geometry.PointCloud()
     pcd.points = open3d.utility.Vector3dVector(np.transpose(pointcloud[0:3, :]))
@@ -52,23 +54,24 @@ def transform_pc(pc, P):
 def accumulate_sequence(root_path, seq, Tr,
                         frame_stride_dist=4, accumulate_radius=50, voxel_size=0.2,
                         is_plot=True):
+
     np_folder = 'voxel0.1-SNr0.6'
     output_folder = 'stride%d-acc%d-voxel%.1f' % (frame_stride_dist, accumulate_radius,voxel_size)
     output_folder_path = os.path.join(root_path, 'data_odometry_velodyne_NWU', 'sequences',
                                       '%02d' % seq, output_folder)
     if os.path.exists(output_folder_path):
         print('%s exists, skip' % output_folder_path)
-        return
+        # return
     else:
-        os.mkdir(output_folder_path)
-
+        os.makedirs(output_folder_path)
+  
     pc_nwu_folder = os.path.join(root_path, 'data_odometry_velodyne_NWU', 'sequences', '%02d' % seq, np_folder)
     pose_folder = os.path.join(root_path, 'poses', '%02d' % seq)
     sample_num = round(len(os.listdir(pc_nwu_folder)))
 
     accumulate_frames = int(round(accumulate_radius / frame_stride_dist))
     Tr_inv = np.linalg.inv(Tr)
-
+ 
     # build per frame_stride_dist poses
     stride_list = [0]
     P_prev = np.load(os.path.join(pose_folder, '%06d.npz' % 0))['pose']  # 4x4
@@ -79,7 +82,7 @@ def accumulate_sequence(root_path, seq, Tr,
         if t_prev_i_norm > frame_stride_dist:
             stride_list.append(i)
             P_prev = P_i
-
+    
     print('%02d stride_list length: %d' % (seq, len(stride_list)))
 
 
@@ -140,7 +143,7 @@ def accumulate_sequence(root_path, seq, Tr,
             plt.show()
 
 def main():
-    root_path = '/ssd/jiaxin/datasets/kitti'
+    root_path = '/media/qhc/Ubuntu 22.0/kitti'
     calib_helper = kitti_helper.KittiCalibHelper(root_path)
 
     is_plot = False

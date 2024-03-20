@@ -29,6 +29,7 @@ class KittiCalibHelper:
 
     def read_calib_files(self):
         seq_folders = [name for name in os.listdir(os.path.join(self.root_path, 'calib'))]
+        print('seq_folders: ', seq_folders)
         calib_matrix_dict = {}
         for seq in seq_folders:
             calib_file_path = os.path.join(self.root_path, 'calib', seq, 'calib.txt')
@@ -230,7 +231,7 @@ class FarthestSampler:
 
     def sample(self, pts, k):
         farthest_pts = np.zeros((self.dim, k))
-        farthest_pts_idx = np.zeros(k, dtype=np.int)
+        farthest_pts_idx = np.zeros(k, dtype=np.int64)
         init_idx = np.random.randint(len(pts))
         farthest_pts[:, 0] = pts[:, init_idx]
         farthest_pts_idx[0] = init_idx

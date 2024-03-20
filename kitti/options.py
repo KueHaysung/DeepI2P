@@ -5,7 +5,7 @@ import torch
 
 class Options:
     def __init__(self):
-        self.dataroot = '/ssd/jiaxin/datasets/kitti'
+        self.dataroot = '/media/qhc/Ubuntu 22.0/kitti'
         # self.dataroot = '/data/personal/jiaxin/datasets/kitti'
         self.checkpoints_dir = 'checkpoints'
         self.version = '1.27'
@@ -45,8 +45,9 @@ class Options:
         self.dataloader_threads = 10
 
         self.batch_size = 8
-        self.gpu_ids = [1]
-        self.device = torch.device('cuda', self.gpu_ids[0])
+        self.gpu_ids = [0]
+        self.device = torch.device('cuda:0')
+        # self.device = torch.device('cuda', self.gpu_ids[0])
         self.normalization = 'batch'
         self.norm_momentum = 0.1
         self.activation = 'relu'

@@ -28,10 +28,10 @@ class MMClassifer():
         self.writer = writer
         self.global_step = 0
 
-        self.detector = networks_united.KeypointDetector(self.opt).to(self.opt.device)
+        self.detector = networks_united.KeypointDetector(self.opt).to(self.opt.device) #将模型放到GPU上
         # self.coarse_ce_criteria = nn.CrossEntropyLoss()
-        self.coarse_ce_criteria = focal_loss.FocalLoss(alpha=0.5, gamma=2, reduction='mean')
-        self.fine_ce_criteria = nn.CrossEntropyLoss()
+        self.coarse_ce_criteria = focal_loss.FocalLoss(alpha=0.5, gamma=2, reduction='mean') #使用focal loss
+        self.fine_ce_criteria = nn.CrossEntropyLoss() #使用交叉熵损失
 
         # multi-gpu training
         if len(opt.gpu_ids) > 1:
@@ -47,7 +47,7 @@ class MMClassifer():
                                                    betas=(0.9, 0.999),
                                                    weight_decay=0)
 
-        # place holder for GPU tensors
+        # place holder for GPU tensors 将tensor放到GPU上
         self.pc = torch.empty(self.opt.batch_size, 3, self.opt.input_pt_num, dtype=torch.float, device=self.opt.device)
         self.intensity = torch.empty(self.opt.batch_size, 1, self.opt.input_pt_num, dtype=torch.float, device=self.opt.device)
         self.sn = torch.empty(self.opt.batch_size, 3, self.opt.input_pt_num, dtype=torch.float, device=self.opt.device)
@@ -57,7 +57,7 @@ class MMClassifer():
         self.img = torch.empty(self.opt.batch_size, 3, self.opt.img_H, self.opt.img_W, dtype=torch.float, device=self.opt.device)
         self.K = torch.empty(self.opt.batch_size, 3, 3, dtype=torch.float, device=self.opt.device)
 
-        # record the train / test loss and accuracy
+        # record the train / test loss and accuracy 记录训练和测试的损失和准确率
         self.train_loss_dict = {}
         self.test_loss_dict = {}
 
@@ -68,10 +68,11 @@ class MMClassifer():
         # if opt.batch_size * 2 / len(opt.gpu_ids) > operations.CUDA_SHARED_MEM_DIM_X or opt.node_num > operations.CUDA_SHARED_MEM_DIM_Y:
         #     print('--- WARNING: batch_size or node_num larger than pre-defined cuda shared memory array size. '
         #           'Please modify CUDA_SHARED_MEM_DIM_X and CUDA_SHARED_MEM_DIM_Y in models/operations.py')
-
+    #增加全局步数
     def global_step_inc(self, delta):
         self.global_step += delta
 
+    #加载模型
     def load_model(self, model_path):
         self.detector.load_state_dict(
             pytorch_helper.model_state_dict_convert_auto(
@@ -79,6 +80,7 @@ class MMClassifer():
                     model_path,
                     map_location='cpu'), self.opt.gpu_ids))
 
+    #设置输入
     def set_input(self,
                   pc, intensity, sn, node_a, node_b,
                   P,
@@ -92,11 +94,13 @@ class MMClassifer():
         self.img.resize_(img.size()).copy_(img).detach()
         self.K.resize_(K.size()).copy_(K).detach()
 
+    #前向传播
     def forward(self,
                 pc, intensity, sn, node_a, node_b,
                 img):
         return self.detector(pc, intensity, sn, node_a, node_b, img)
 
+    #
     def inference_pass(self):
         N = self.pc.size(2)
         B, H, W = self.img.size(0), self.img.size(2), self.img.size(3)
@@ -132,7 +136,8 @@ class MMClassifer():
         assert L == img_W_fine_res * img_H_fine_res
         # =================>>>>>>>>>>>>>>>>>> network feed forward ==================>>>>>>>>>>>>>>>>>>
 
-        # project points onto image to get ground truth labels for both coarse and fine resolution
+        # project points onto image to get ground truth labels for both coarse and fine resolution 
+        #程序中的pc是3xN的矩阵，P是3x4的矩阵，img是3xHxW的矩阵
         pc_homo = torch.cat((self.pc,
                                 torch.ones((B, 1, N), dtype=torch.float32, device=self.pc.device)),
                                dim=1)  # Bx4xN

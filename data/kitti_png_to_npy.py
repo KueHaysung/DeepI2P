@@ -1,3 +1,5 @@
+import sys
+sys.path.append("/home/qhc/test/DeepI2P")
 import os
 import os.path
 import numpy as np
@@ -39,12 +41,12 @@ def make_kitti_dataset(root_path, mode, opt):
 
 
 if __name__ == '__main__':
-    root_path = '/ssd/jiaxin/datasets/kitti'
+    root_path = '/media/qhc/Ubuntu 22.0/kitti'
     seq_list = range(0, 22)
     np_folder = 'voxel0.1-SNr0.6'
 
     is_save_img = False
-    is_save_pc = True
+    is_save_pc = True 
 
     calib_helper = kitti_helper.KittiCalibHelper(root_path)
 
@@ -123,10 +125,10 @@ if __name__ == '__main__':
                     assert False
 
                 # project the points onto image as visualization
-                # pc_np_vis = kitti_helper.projection_pc_img(pc_img_np, img, K)
+                pc_np_vis = kitti_helper.projection_pc_img(pc_img_np, img, K)
                 # plt.figure()
                 # plt.imshow(pc_np_vis)
-
+                # plt.show()
                 # crop point cloud, get those overlapped with image only
                 pc_img_np, intensity_img_np, sn_img_np = kitti_helper.crop_pc_with_img(pc_img_np,
                                                                                        intensity_img_np,
@@ -137,7 +139,11 @@ if __name__ == '__main__':
                                                      intensity_img_np,
                                                      sn_img_np), axis=0),
                                      dtype=np.float32)
-                np.save(pc_img_save_path, npy_out)
+                # np.save(pc_img_save_path, npy_out)
 
+                #从npy_out中分离出pc_np并可视化
+                # pc_np_vis_new=npy_out[0:3,:]
+                # plt.figure()
+                # plt.imshow(pc_img_np)
                 # plt.show()
 

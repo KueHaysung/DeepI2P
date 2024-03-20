@@ -1,3 +1,5 @@
+import sys
+sys.path.append("/home/qhc/test/DeepI2P")
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

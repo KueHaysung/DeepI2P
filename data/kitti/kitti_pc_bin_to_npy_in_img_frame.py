@@ -1,3 +1,5 @@
+import sys
+sys.path.append("/home/qhc/test/DeepI2P")
 import numpy as np
 import open3d
 import os
@@ -18,7 +20,7 @@ from data.kitti_helper import *
 
 def read_velodyne_bin(path):
     '''
-    :param path:
+    :param path:`
     :return: homography matrix of the point cloud, N*4
     '''
     pc_list = []
@@ -49,19 +51,21 @@ def process_kitti(root_path,
             data_np = read_velodyne_bin(os.path.join(pc_bin_folder, '%06d.bin' % i))
             pc_np = data_np[0:3, :]
             intensity_np = data_np[3:, :]
-
             # compute surface normal and downsample -----------------------------------
             # convert to Open3D point cloud datastructure
             pcd = open3d.geometry.PointCloud()
             pcd.points = open3d.utility.Vector3dVector(pc_np.T)
-            downpcd = open3d.geometry.voxel_down_sample(pcd, voxel_size=downsample_voxel_size)
-
+            # downpcd = open3d.geometry.voxel_down_sample(pcd, voxel_size=downsample_voxel_size)
+            downpcd = pcd.voxel_down_sample(voxel_size=downsample_voxel_size)
             # surface normal computation
-            open3d.geometry.estimate_normals(downpcd,
-                                             search_param=open3d.geometry.KDTreeSearchParamHybrid(radius=sn_radius,
-                                                                                                  max_nn=sn_max_nn))
-            open3d.geometry.orient_normals_to_align_with_direction(downpcd, [0, 0, 1])
+            # print(f"sn_radius: {sn_radius}, sn_max_nn: {sn_max_nn}")
+            # open3d.geometry.estimate_normals(downpcd,search_param=open3d.geometry.KDTreeSearchParamHybrid(radius=sn_radius,max_nn=sn_max_nn))
+            # open3d.geometry.orient_normals_to_align_with_direction(downpcd, [0, 0, 1])
+            downpcd.estimate_normals(search_param=open3d.geometry.KDTreeSearchParamHybrid(radius=sn_radius, max_nn=sn_max_nn))
+            downpcd.orient_normals_to_align_with_direction([0, 0, 1])
             # open3d.visualization.draw_geometries([downpcd])
+
+
 
             # get numpy array from pcd
             pc_down_np = np.asarray(downpcd.points).T
@@ -112,7 +116,7 @@ def process_kitti(root_path,
                 H, W = img.shape[0], img.shape[1]
                 img_depth = np.zeros((H, W), dtype=np.float32)
                 img_depth_dist_to_nn_pc = np.zeros((H, W), dtype=np.float32) + H*W  # large init distance
-                img_depth_mask = np.zeros((H, W), dtype=np.bool)
+                img_depth_mask = np.zeros((H, W), dtype=np.bool_)
 
                 P_pc_homo = calib_helper.transform_pc_vel_to_img(pc_np, seq, img_key_P)
                 KP_pc_homo = np.dot(K, P_pc_homo)  # 3xM
@@ -180,8 +184,8 @@ def process_kitti(root_path,
 
 
 if __name__ == '__main__':
-    root_path = '/ssd/jiaxin/datasets/kitti'
-    pc_bin_root_path = '/data/datasets/data_odometry_velodyne/dataset'
+    root_path = '/media/qhc/Ubuntu 22.0/kitti'
+    pc_bin_root_path = '/media/qhc/Ubuntu 22.0/mykitti/data_odometry_velodyne'#正确
     seq_list = list(range(22))
 
     downsample_voxel_size = 0.1
@@ -212,4 +216,3 @@ if __name__ == '__main__':
 
     for thread in kitti_threads:
         thread.join()
-

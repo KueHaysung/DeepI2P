@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 
-def query_topk(node, x, M, k):
+def query_topk(node, x, M, k): #该函数是用来找到x中每个点对应的最近的k个node
     '''
     :param node: SOM node of BxCxM tensor
     :param x: input data BxCxN tensor

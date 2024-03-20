@@ -15,13 +15,16 @@ class KeypointDetector(nn.Module):
     def __init__(self, opt: Options):
         super(KeypointDetector, self).__init__()
         self.opt = opt
-
+        #点云编码器
         self.pc_encoder = networks_pc.PCEncoder(opt, Ca=64, Cb=256, Cg=512).to(self.opt.device)
+        #图像编码器
         self.img_encoder = networks_img.ImageEncoder(self.opt).to(self.opt.device)
 
+        #细粒度图像的高度和宽度
         self.H_fine_res = int(round(self.opt.img_H / self.opt.img_fine_resolution_scale))
         self.W_fine_res = int(round(self.opt.img_W / self.opt.img_fine_resolution_scale))
 
+        #节点B的注意力网络
         self.node_b_attention_pn = layers_pc.PointNet(256+512,
                                                [256, self.H_fine_res*self.W_fine_res],
                                                activation=self.opt.activation,
@@ -30,6 +33,7 @@ class KeypointDetector(nn.Module):
                                                norm_act_at_last=False)
 
         # in_channels: node_b_features + global_feature + image_s32_feature + image_global_feature
+        #节点B的PointNet
         self.node_b_pn = layers_pc.PointNet(256+512+512+512,
                                             [1024, 512, 512],
                                             activation=self.opt.activation,
@@ -37,6 +41,7 @@ class KeypointDetector(nn.Module):
                                             norm_momentum=opt.norm_momentum,
                                             norm_act_at_last=False)
 
+        #节点A的注意力网络
         self.node_a_attention_pn = layers_pc.PointNet(64 + 512,
                                                       [256, int(self.H_fine_res * self.W_fine_res * 4)],
                                                       activation=self.opt.activation,
@@ -45,6 +50,7 @@ class KeypointDetector(nn.Module):
                                                       norm_act_at_last=False)
 
         # in_channels: node_a_features + interpolated node_b_features
+        #节点A的PointNet
         self.node_a_pn = layers_pc.PointNet(64+256+512,
                                             [512, 128, 128],
                                             activation=self.opt.activation,
@@ -54,6 +60,7 @@ class KeypointDetector(nn.Module):
 
         # final network for per-point labeling
         # in_channels: second_pn_out + interpolated node_a_features
+        #最终用于每个点的标签的网络
         per_point_pn_in_channels = 32 + 64 + 128 + 512
         # per_point_pn_in_channels = 32 + 64 + 512 + 512
         if self.opt.is_fine_resolution:
@@ -72,7 +79,7 @@ class KeypointDetector(nn.Module):
                                                    norm_momentum=opt.norm_momentum,
                                                    norm_act_at_last=False,
                                                    dropout_list=[0.5, 0.5, 0])
-
+    #从输入的特征集合中，根据给定的索引 min_k_idx，选择对应的 top-k 特征。
     def gather_topk_features(self, min_k_idx, features):
         """
 
@@ -86,7 +93,7 @@ class KeypointDetector(nn.Module):
         return torch.gather(features.unsqueeze(3).expand(B, C, M, k),
                             index=min_k_idx.unsqueeze(1).expand(B, C, N, k),
                             dim=2)  # BxCxNxk
-
+    #根据给定的插值索引 interp_ab_topk_idx 对输入的节点 B 特征进行插值上采样
     def upsample_by_interpolation(self,
                                   interp_ab_topk_idx,
                                   node_a,

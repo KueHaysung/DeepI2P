@@ -4,9 +4,9 @@ from distutils.dir_util import copy_tree
 
 
 if __name__ == '__main__':
-    src_folder = '/ssd/jiaxin/datasets/kitti/data_odometry_velodyne_NWU/sequences'
+    src_folder = '/media/qhc/Ubuntu 22.0/dataset/sequences'
     sensor = 'stride4-acc50-voxel0.4'
-    dst_folder = '/home/jiaxin/remote/datasets/kitti/data_odometry_velodyne_NWU/sequences'
+    dst_folder = '/home/qhc/test/dataset/kitti/data_odometry_velodyne_NWU/sequences'
 
     for seq in range(11):
         src_sensor_folder = os.path.join(src_folder, '%02d' % seq, sensor)

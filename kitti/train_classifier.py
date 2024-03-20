@@ -1,3 +1,5 @@
+import sys
+sys.path.append("/home/qhc/test/DeepI2P")
 import open3d
 import time
 import copy
@@ -22,7 +24,8 @@ if __name__=='__main__':
     if os.path.isdir(logdir):
         user_answer = input("The log directory %s exists, do you want to delete it? (y or n) : " % logdir)
         if user_answer == 'y':
-            # delete log folder
+            # delete log foldery
+            
             shutil.rmtree(logdir)
         else:
             exit()
@@ -49,12 +52,14 @@ if __name__=='__main__':
     else:
         model = MMClassiferCoarse(opt, writer)
     # model.load_model('/ssd/jiaxin/point-img-feature/kitti/save/1.3-odometry/checkpoints/best.pth')
-
-    best_test_accuracy = 0
+    print("开始训练")
+    print(torch.cuda.current_device())
+    best_test_accuracy = 0  
     for epoch in range(101):
-
+        print("Epoch %d" % epoch)
         epoch_iter = 0
         for i, data in enumerate(trainloader):
+            print("Epoch %d, iter %d" % (epoch, i))
             pc, intensity, sn, node_a, node_b, \
             P, img, K, t_ij = data
             B = pc.size()[0]
@@ -66,7 +71,6 @@ if __name__=='__main__':
             model.set_input(pc, intensity, sn, node_a, node_b,
                             P, img, K)
             model.optimize()
-
             if i % int(800) == 0 and i > 0:
                 # print/plot errors
                 t = (time.time() - iter_start_time) / opt.batch_size

@@ -38,6 +38,7 @@ def plot_pc(pc_np, birds_view=False, color=None, size=1.0, ax=None, cmap=cm.jet,
     if ax is None:
         fig = plt.figure(figsize=(9, 9))
         ax = Axes3D(fig)
+        fig.add_axes(ax)
     if type(color) == np.ndarray:
         ax.scatter(pc_np[0, :], pc_np[1, :], pc_np[2, :], s=size, c=color, cmap=cmap, edgecolors='none')
     else:
